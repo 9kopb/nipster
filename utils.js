@@ -13,6 +13,7 @@ exports.getJSON = function(options, callback) {
                 callback(data);
             } catch(e) {
                 console.log('Parse error (%s) for data: %s', e, data);
+                callback();
             }
         });
     });
