@@ -21,7 +21,11 @@ updateGithub = function() {
             path: '/repos/' + url
         },
         function(repo) {
-            repo.updated = new Date();
+            if (!repo || ! repo.html_url) {
+                console.log('Repo not found for %s', url, repo);
+            } else {
+                repo.updated = new Date();
+            }
             all[key].repo = repo;
             utils.saveJSON(fileAll, all, function() {
                 updateGithub();
@@ -46,9 +50,11 @@ updateGithub = function() {
 };
 
 utils.loadJSON(fileAll, function(err, data) {
-    Object.keys(data).forEach(function(key) {
-        all[key] = data[key];
-    });
+    if (data) {
+        Object.keys(data).forEach(function(key) {
+            all[key] = data[key];
+        });
+    }
     utils.getJSON({
         host: 'registry.npmjs.org'
     },
