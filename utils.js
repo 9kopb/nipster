@@ -1,5 +1,6 @@
 var http = require('https'),
-fs = require('fs');
+fs = require('fs'),
+path = require('path');
 
 exports.getJSON = function(options, callback) {
     http.get(options, function(res) {
@@ -36,6 +37,7 @@ exports.loadJSON = function(file, callback) {
 
 exports.saveJSON = function(file, data, callback) {
     try  {
+        fs.mkdir(path.dirname(file), 0755);
         data = JSON.stringify(data);
         fs.writeFile(file, data, function(err) {
             if (err) {
