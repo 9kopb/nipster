@@ -2,8 +2,29 @@ var utils = require('./utils.js'),
 fileAll = 'json/packages-all.json',
 file = 'json/packages.json',
 all = {},
-packages = {},
-updateGithub = function() {
+cache = process.argv.indexOf('cache') >= 0;
+
+console.log('%s - Starting nipster, cache: %s', new Date(), cache);
+
+function serialize() {
+    var packages = {
+        list: [],
+        updated: new Date()
+    };
+    Object.keys(all).filter(function(key) {
+        return all[key].repo;
+    }).forEach(function(key) {
+        var a = all[key],
+        forks = a.repo ? a.repo.forks: '',
+        watchers = a.repo ? a.repo.watchers: '';
+        packages.list.push(a.name, a.repo.html_url, a.description, forks, watchers);
+    });
+    utils.saveJSON(file, packages, function() {
+        console.log('DONE!');
+    });
+}
+
+function updateGithub() {
     var keys = Object.keys(all).filter(function(key) {
         var p = all[key];
         return ! p.repo && p.repository && p.repository.url && p.repository.url.match(/github/i);
@@ -23,32 +44,20 @@ updateGithub = function() {
         function(repo) {
             repo.updated = new Date();
             all[key].repo = repo;
-            utils.saveJSON(fileAll, all, function() {
+            if (cache) {
+                utils.saveJSON(fileAll, all, function() {
+                    updateGithub();
+                });
+            } else {
                 updateGithub();
-            });
+            }
         });
     } else {
-        packages = [];
-        Object.keys(all).filter(function(key) {
-            return all[key].repo;
-        }).forEach(function(key) {
-            var a = all[key];
-            packages.push(['<a href="' + a.repo.html_url + '">' + a.name + '</a>', a.description, a.repo ? a.repo.forks: '', a.repo ? a.repo.watchers: '']);
-        });
-        packages = {
-            aaData: packages,
-            lastUpdate: new Date()
-        };
-        utils.saveJSON(file, packages, function() {
-            console.log('DONE!');
-        });
+        serialize();
     }
-};
+}
 
-utils.loadJSON(fileAll, function(err, data) {
-    Object.keys(data).forEach(function(key) {
-        all[key] = data[key];
-    });
+function updatePackages() {
     utils.getJSON({
         host: 'registry.npmjs.org'
     },
@@ -60,5 +69,18 @@ utils.loadJSON(fileAll, function(err, data) {
         });
         updateGithub();
     });
-});
+}
+
+if (cache) {
+    utils.loadJSON(fileAll, function(err, data) {
+        if (!err) {
+            Object.keys(data).forEach(function(key) {
+                all[key] = data[key];
+            });
+        }
+        updatePackages();
+    });
+} else {
+    updatePackages();
+}
 
