@@ -7,6 +7,7 @@ cache = process.argv.indexOf('cache') >= 0;
 console.log('%s - Starting nipster, cache: %s', new Date(), cache);
 
 function serialize() {
+    utils.saveJSON(fileAll, all);
     var packages = {
         list: [],
         updated: new Date()
