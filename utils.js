@@ -37,7 +37,7 @@ exports.loadJSON = function(file, callback) {
 
 exports.saveJSON = function(file, data, callback) {
     try  {
-        fs.mkdir(path.dirname(file), 0755);
+        fs.mkdir(path.dirname(file), '0755');
         data = JSON.stringify(data);
         fs.writeFile(file, data, function(err) {
             if (err) {
