@@ -42,6 +42,9 @@ function updateGithub() {
             path: '/repos/' + url
         },
         function(repo) {
+            if (repo.message) {
+                console.log(repo);
+            }
             repo.updated = new Date();
             all[key].repo = repo;
             if (cache) {
