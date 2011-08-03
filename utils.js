@@ -14,9 +14,11 @@ exports.getJSON = function(options, callback) {
 		res.on('end', function() {
 			try {
 				data = JSON.parse(data);
-				callback(data);
+				callback(null, data);
 			} catch(e) {
 				console.log('Parse error (%s) for data: %s', e, data);
+                console.log(e, data);
+                callback(e);
 			}
 		});
 	});
