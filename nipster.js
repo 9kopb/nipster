@@ -71,7 +71,7 @@ function githubAPI(all, callback) {
     var keys = Object.keys(all).filter(function(key) {
         return all[key].githuburl && ! all[key].github;
     });
-    if (keys.length > 2200) {
+    if (keys.length > 0) {
         var key = keys[0];
         origUrl = all[key].githuburl,
         url = origUrl.replace(/(^.*\.com\/)|:|.git$/g, '');
