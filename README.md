@@ -1,4 +1,4 @@
-Nipster!
+[Nipster!](http://eirikb.github.com/nipster/)
 --
 NPM search tool with github information hosted on github
 
