@@ -1,12 +1,10 @@
 Nipster!
 --
+NPM search tool with github information hosted on github
+
 * Githubrated packages!
 * 100% uptime!
 * Fast and simple!
-
-Npm package search tool hosted on github.
-This is a simple static app that weigh npm packages based on forks and watches from github.
-
 
 The page
 ---
