@@ -32,7 +32,7 @@ function loadAll(callback) {
         function(error, data) {
             if (!error) {
                 Object.keys(data).forEach(function(key) {
-                    all[key]  = data[key];
+                    all[key] = data[key];
                 });
                 all.timestamp = Date.now();
                 utils.saveJSON(fileAll, all);
@@ -72,7 +72,7 @@ function githubAPI(all, callback) {
         return all[key].githuburl && ! all[key].github;
     });
     if (keys.length > 0) {
-        var key = keys[0];
+        var key = keys[0],
         origUrl = all[key].githuburl,
         url = origUrl.replace(/(^.*\.com\/)|:|.git$/g, '');
 
