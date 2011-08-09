@@ -109,7 +109,7 @@ function serialize(all, callback) {
         forks = a.github ? a.github.forks: '',
         watchers = a.github ? a.github.watchers: '';
         packages.packages.push([a.name, a.description, forks, watchers]);
-        packages.urls.push(a.github.html_url);
+        packages.urls.push(a.github.html_url.replace(/.*\//, ''));
     });
 
     Object.keys(all).filter(function(key) {
