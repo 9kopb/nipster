@@ -73,7 +73,7 @@ function githubAPI(all, callback) {
     });
     if (keys.length > 0) {
         var key = keys[0],
-        url = all[key].githuburl..replace(/(^.*\.com.)|\.git$/g, '');
+        url = all[key].githuburl.replace(/(^.*\.com.)|\.git$/g, '');
 
         console.log('%d - %s - %s', keys.length, key, url);
 
