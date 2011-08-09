@@ -120,6 +120,8 @@ function serialize(all, callback) {
         packages.nongithub.push([a.name, a.description, message]);
     });
 
+    packages.end = Date.now();
+
     utils.saveJSON(file, packages, callback);
 }
 
