@@ -6,8 +6,12 @@ NPM search tool with github information hosted on github
 * 100% uptime!
 * Fast and simple!
 
+Alternative url
+--
+www forwarding from http://nipster.eirikb.no
+
 The page
 ---
-For index.html and assets for http://eirikb.github.com/nipster/ look at the gh-pages branch
+For index.html and assets for http://eirikb.github.com/nipster/ look at the gh-pages branch  
 https://github.com/eirikb/nipster/tree/gh-pages
 
