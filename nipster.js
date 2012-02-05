@@ -81,7 +81,6 @@ function getRepositories(rawPackages) {
                     var r = repo[t];
                     if (r) urls.push(r);
                 });
-
                 if (typeof repo === 'string') urls.push(repo);
             }
         }
@@ -91,7 +90,6 @@ function getRepositories(rawPackages) {
         } else {
             parseRepo(p.repository);
         }
-
         if (p.url) urls.push(p.url);
 
         return {
@@ -147,11 +145,8 @@ function github(url, cb) {
     },
     function(err, res, data) {
         if (!err) {
-            if (!data || ! data.html_url) {
-                cb(true, data);
-            } else {
-                cb(null, data);
-            }
+            err = ! data || ! data.html_url;
+            cb(err, data);
         } else {
             cb(err);
         }
