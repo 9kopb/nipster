@@ -1,0 +1,16 @@
+{
+    "name": "nipster",
+    "author": "Eirik Brandtzæg <eirikb@eirikb.no>",
+    "main": "nipster.js",
+    "version": "0.0.1",
+    "description": "Building JSON file for http://eirikb.github.com/nipster",
+    "homepage": "http://eirikb.github.com/nipster",
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/eirikb/nipster"
+    },
+    "dependencies": {
+        "request": "2.9.100"
+    }
+}
+
