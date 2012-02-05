@@ -129,8 +129,7 @@ function githubSync(repos, cb) {
             cb(repos);
         }
     };
-    // TODO NO I
-    sync(repos, repos.length - 4);
+    sync(repos);
 }
 
 function github(url, cb) {
