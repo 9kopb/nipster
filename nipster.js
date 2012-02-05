@@ -20,6 +20,8 @@ updatePackages(raw, function(err, raw) {
     console.log('Total packages: %d', Object.keys(raw.packages).length);
 
     var repos = getRepositories(raw.packages);
+    repos = filterRepoUrls(repos);
+
     githubSync(repos, function(repos) {
         var packages = {},
         repoUrls = [],
@@ -73,7 +75,9 @@ function getRepositories(rawPackages) {
         urls = [];
 
         function parseRepo(repo) {
-            if (repo) { ['private', 'url', 'web', 'path'].forEach(function(t) {
+            if (repo) {
+
+                ['private', 'url', 'web', 'path'].forEach(function(t) {
                     var r = repo[t];
                     if (r) urls.push(r);
                 });
@@ -94,15 +98,19 @@ function getRepositories(rawPackages) {
             name: k,
             url: urls
         };
-    }).filter(function(package) {
-        var urls = package.url.filter(function(url) {
+    });
+}
+
+function filterRepoUrls(repos) {
+    return repos.filter(function(repo) {
+        var urls = repo.url.filter(function(url) {
             return ('' + url).match(/github/);
         }).map(function(url) {
             return url.replace(/(^.*\.com.)|\.git$/g, '');
         });
 
         if (urls.length > 0) {
-            package.url = urls[0];
+            repo.url = urls[0];
             return true;
         }
     });
@@ -128,7 +136,7 @@ function githubSync(repos, cb) {
         } else {
             cb(repos);
         }
-    };
+    }
     sync(repos);
 }
 
