@@ -120,7 +120,7 @@ function githubSync(repos, cb) {
         if (!i) i = 0;
         if (i < repos.length - 1) {
             repo = repos[i];
-            console.log('%d - %s - %s', i, repo.name, repo.url);
+            console.log('%d - %s - %s', repos.length - i, repo.name, repo.url);
             github(repo.url, function(err, data) {
                 if (!err) {
                     repo.forks = data.forks;
