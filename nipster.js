@@ -32,9 +32,12 @@ updatePackages(raw, function(err, raw) {
             author = repo.author;
 
             if (r.url) repoUrls[i] = r.url;
-            if (author && author.url) authorUrls[i] = repo.author.url;
+            if (author) {
+                if (author.url) authorUrls[i] = repo.author.url;
+                author = author.name;
+            }
 
-            return [r.name, repo.description, author && author.name, r.forks, r.watchers];
+            return [r.name, repo.description, author, r.forks, r.watchers];
         });
 
         packages.repoUrls = repoUrls;
@@ -116,12 +119,13 @@ function filterRepoUrls(repos) {
 
 function githubSync(repos, cb) {
     function sync(repos, i) {
-        var repo;
+        var repo, sleep;
+
         if (!i) i = 0;
         if (i < repos.length - 1) {
             repo = repos[i];
             console.log('%d - %s - %s', repos.length - i, repo.name, repo.url);
-            github(repo.url, function(err, data) {
+            github(repo.url, function(err, data, limit) {
                 if (!err) {
                     repo.forks = data.forks;
                     repo.watchers = data.watchers;
@@ -129,7 +133,18 @@ function githubSync(repos, cb) {
                     repo.error = err;
                     repo.errorMsg = data;
                 }
-                sync(repos, i + 1);
+
+                if (limit > 0) {
+                    sync(repos, i + 1);
+                } else {
+                    sleep = (60 * 60) - (Date.now() - start.getTime()) / 1000;
+                    sleep = Math.floor(sleep);
+
+                    console.log('Limit reached, sleeping for %d seconds', sleep);
+                    setTimeout(function() {
+                        sync(repos, i + 1);
+                    }, sleep * 1000);
+                }
             });
         } else {
             cb(repos);
@@ -144,11 +159,12 @@ function github(url, cb) {
         json: true
     },
     function(err, res, data) {
+        var limit = parseInt(res.headers['x-ratelimit-remaining'], 10);
         if (!err) {
             err = ! data || ! data.html_url;
-            cb(err, data);
+            cb(err, data, limit);
         } else {
-            cb(err);
+            cb(err, null, limit);
         }
     });
 }
