@@ -33,11 +33,7 @@ updatePackages(raw, function(err, raw) {
             var repo = raw.packages[r.name],
             author = repo.author;
 
-            if (r.url) {
-                repoUrls[i] = r.url;
-            } else {
-                repoUrls[i] = 0;
-            }
+            repoUrls[i] = r.url || 0;
             if (author) {
                 if (author.url) authorUrls[i] = repo.author.url;
                 author = author.name;
@@ -110,17 +106,15 @@ function getRepositories(rawPackages) {
 }
 
 function filterRepoUrls(repos) {
-    return repos.filter(function(repo) {
+    return repos.map(function(repo) {
         var urls = repo.url.filter(function(url) {
             return ('' + url).match(/github/);
         }).map(function(url) {
             return url.replace(/(^.*\.com.)|\.git$/g, '');
         });
 
-        if (urls.length > 0) {
-            repo.url = urls[0];
-            return true;
-        }
+        repo.url = urls.length > 0 ? urls[0] : false;
+        return repo;
     });
 }
 
