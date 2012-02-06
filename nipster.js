@@ -24,7 +24,7 @@ updatePackages(raw, function(err, raw) {
 
     githubSync(repos, function(repos) {
         var packages = {
-            end: Date.now()
+            start: start
         },
         repoUrls = [],
         authorUrls = [];
@@ -44,6 +44,7 @@ updatePackages(raw, function(err, raw) {
 
         packages.repoUrls = repoUrls;
         packages.authorUrls = authorUrls;
+        packages.end = Date.now();
 
         fs.writeFile(file, JSON.stringify(packages), function() {
             console.log('Done');
