@@ -12,6 +12,7 @@ www forwarding from http://nipster.eirikb.no
 
 The page
 ---
-For index.html and assets for http://eirikb.github.com/nipster/ look at the gh-pages branch  
+
+index.html and assets are in gh-pages branch  
 https://github.com/eirikb/nipster/tree/gh-pages
 
