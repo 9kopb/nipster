@@ -33,7 +33,11 @@ updatePackages(raw, function(err, raw) {
             var repo = raw.packages[r.name],
             author = repo.author;
 
-            if (r.url) repoUrls[i] = r.url;
+            if (r.url) {
+                repoUrls[i] = r.url;
+            } else {
+                repoUrls[i] = 0;
+            }
             if (author) {
                 if (author.url) authorUrls[i] = repo.author.url;
                 author = author.name;
