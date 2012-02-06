@@ -23,7 +23,9 @@ updatePackages(raw, function(err, raw) {
     repos = filterRepoUrls(repos);
 
     githubSync(repos, function(repos) {
-        var packages = {},
+        var packages = {
+            end: Date.now()
+        },
         repoUrls = [],
         authorUrls = [];
 
@@ -143,7 +145,8 @@ function githubSync(repos, cb) {
                     console.log('Limit reached, sleeping for %d seconds', sleep);
                     setTimeout(function() {
                         sync(repos, i + 1);
-                    }, sleep * 1000);
+                    },
+                    sleep * 1000);
                 }
             });
         } else {
