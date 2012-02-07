@@ -31,7 +31,10 @@ updatePackages(raw, function(err, raw) {
 
         packages.packages = repos.map(function(r, i) {
             var repo = raw.packages[r.name],
-            author = repo.author;
+            author = repo.author,
+            users = 0;
+
+            if (repo.users) users = Object.keys(repo.users).length;
 
             repoUrls[i] = r.url || 0;
             if (author) {
@@ -39,7 +42,7 @@ updatePackages(raw, function(err, raw) {
                 author = author.name;
             }
 
-            return [r.name, repo.description, author, r.forks, r.watchers];
+            return [r.name, repo.description, author, r.forks, r.watchers, users];
         });
 
         packages.repoUrls = repoUrls;
@@ -119,35 +122,42 @@ function filterRepoUrls(repos) {
 }
 
 function githubSync(repos, cb) {
+    var prevLimit = '?';
+    console.log('Legend: Packages left (github query limit) - package name - package url');
+
     function sync(repos, i) {
         var repo, sleep;
 
         if (!i) i = 0;
         if (i < repos.length - 1) {
             repo = repos[i];
-            console.log('%d - %s - %s', repos.length - i, repo.name, repo.url);
-            github(repo.url, function(err, data, limit) {
-                if (!err) {
-                    repo.forks = data.forks;
-                    repo.watchers = data.watchers;
-                } else {
-                    repo.error = err;
-                    repo.errorMsg = data;
-                }
+            console.log('%d (%s) - %s - %s', repos.length - i, prevLimit, repo.name, repo.url);
+            if (repo.url) {
+                github(repo.url, function(err, data, limit) {
+                    prevLimit = limit;
+                    if (!err) {
+                        repo.forks = data.forks;
+                        repo.watchers = data.watchers;
+                    } else {
+                        delete repo.url;
+                    }
 
-                if (limit > 0) {
-                    sync(repos, i + 1);
-                } else {
-                    sleep = (60 * 60) - (Date.now() - start.getTime()) / 1000;
-                    sleep = Math.floor(sleep);
-
-                    console.log('Limit reached, sleeping for %d seconds', sleep);
-                    setTimeout(function() {
+                    if (limit > 0) {
                         sync(repos, i + 1);
-                    },
-                    sleep * 1000);
-                }
-            });
+                    } else {
+                        sleep = (60 * 60) - (Date.now() - start.getTime()) / 1000;
+                        sleep = Math.floor(sleep);
+
+                        console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
+                        setTimeout(function() {
+                            sync(repos, i + 1);
+                        },
+                        sleep * 1000);
+                    }
+                });
+            } else {
+                sync(repos, i + 1);
+            }
         } else {
             cb(repos);
         }
@@ -161,12 +171,12 @@ function github(url, cb) {
         json: true
     },
     function(err, res, data) {
-        var limit = parseInt(res.headers['x-ratelimit-remaining'], 10);
         if (!err) {
+            var limit = parseInt(res.headers['x-ratelimit-remaining'], 10);
             err = ! data || ! data.html_url;
             cb(err, data, limit);
         } else {
-            cb(err, null, limit);
+            cb(err, null, 1);
         }
     });
 }
