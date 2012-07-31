@@ -42,7 +42,7 @@ updatePackages(raw, function(err, raw) {
                 author = author.name;
             }
 
-            return [r.name, repo.description, author, r.forks, r.watchers, users];
+            return [r.name, repo.description, author, r.time.modified, r.forks, r.watchers, users];
         });
 
         packages.repoUrls = repoUrls;
