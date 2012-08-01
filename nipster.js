@@ -31,8 +31,9 @@ updatePackages(raw, function(err, raw) {
 
         packages.packages = repos.map(function(r, i) {
             var repo = raw.packages[r.name],
-            author = repo.author,
-            users = 0;
+                author = repo.author,
+                users = 0,
+                modified = Date.now();
 
             if (repo.users) users = Object.keys(repo.users).length;
 
@@ -42,14 +43,16 @@ updatePackages(raw, function(err, raw) {
                 author = author.name;
             }
 
-            return [r.name, repo.description, author, r.time.modified, r.forks, r.watchers, users];
+            if (repo.time) modified = repo.time.modified;
+
+            return [r.name, repo.description, author, modified, r.forks, r.watchers, users];
         });
 
         packages.repoUrls = repoUrls;
         packages.authorUrls = authorUrls;
         packages.end = Date.now();
 
-        fs.writeFile(file, JSON.stringify(packages), function() {
+        fs.writeFile(file, JSON.stringify(packages), function () {
             console.log('Done');
         });
     });
