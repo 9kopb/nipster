@@ -43,7 +43,12 @@ updatePackages(raw, function(err, raw) {
                 author = author.name;
             }
 
-            if (repo.time) modified = repo.time.modified;
+            if (repo.time) {
+                modified = parseInt(repo.time, 10);
+                modified = isNaN(modified) ? repo.time : modified;
+                modified = new Date(modified);
+                modified = [modified.getFullYear(), modified.getMonth() + 1, modified.getDate()].join('-');
+            }
 
             return [r.name, repo.description, author, modified, r.forks, r.watchers, users];
         });
