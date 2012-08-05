@@ -44,11 +44,10 @@ updatePackages(raw, function(err, raw) {
             }
 
             if (repo.time) {
-                modified = parseInt(repo.time, 10);
-                modified = isNaN(modified) ? repo.time : modified;
-                modified = new Date(modified);
+                modified = new Date(repo.time.modified);
                 modified = [modified.getFullYear(), modified.getMonth() + 1, modified.getDate()].join('-');
             }
+            console.log(modified)
 
             return [r.name, repo.description, author, modified, r.forks, r.watchers, users];
         });
@@ -153,7 +152,7 @@ function githubSync(repos, cb) {
                     if (limit > 0) {
                         sync(repos, i + 1);
                     } else {
-                        sleep = (60 * 60) - (Date.now() - start.getTime()) / 1000;
+                        sleep = (70 * 60) - (Date.now() - start.getTime()) / 1000;
                         sleep = Math.floor(sleep);
 
                         console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
