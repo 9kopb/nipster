@@ -1,83 +1,55 @@
-var fs = require('fs'),
-path = require('path'),
-request = require('request');
+var fs = require('fs');
+var path = require('path');
+var request = require('request');
 
-var raw, file = './packages.json',
-fileRaw = './packages-raw.json',
-start = new Date();
+var packagesFile = './packages-raw.json';
+var outputFile = './packages.json';
+
+var start = new Date();
+
 
 console.log('Nipster! - %s-%s-%s', start.getFullYear(), start.getMonth() + 1, start.getDate());
 
-try {
-    raw = require(fileRaw);
-} catch(e) {
-    raw = {
-        packages: {}
-    };
-}
+var packages = loadPackages();
+loadOrupdatePackages(packages, function() {
+    setRepoUrl(packages.packages);
 
-updatePackages(raw, function(err, raw) {
-    console.log('Total packages: %d', Object.keys(raw.packages).length);
+    loadAndSetRepos(packages.packages, function() {
+        fs.writeFileSync(packagesFile, JSON.stringify(packages));
 
-    var repos = getRepositories(raw.packages);
-    repos = filterRepoUrls(repos);
-
-    githubSync(repos, function(repos) {
-        var packages = {
-            start: start
-        },
-        repoUrls = [],
-        authorUrls = [];
-
-        packages.packages = repos.map(function(r, i) {
-            var repo = raw.packages[r.name],
-                author = repo.author,
-                users = 0,
-                modified = Date.now();
-
-            if (repo.users) users = Object.keys(repo.users).length;
-
-            repoUrls[i] = r.url || 0;
-            if (author) {
-                if (author.url) authorUrls[i] = repo.author.url;
-                author = author.name;
-            }
-
-            if (repo.time) {
-                modified = new Date(repo.time.modified);
-                modified = [modified.getFullYear(), modified.getMonth() + 1, modified.getDate()].join('-');
-            }
-            console.log(modified)
-
-            return [r.name, repo.description, author, modified, r.forks, r.watchers, users];
-        });
-
-        packages.repoUrls = repoUrls;
-        packages.authorUrls = authorUrls;
-        packages.end = Date.now();
-
-        fs.writeFile(file, JSON.stringify(packages), function () {
-            console.log('Done');
-        });
+        writePackages(packages);
     });
 });
 
-function updatePackages(raw, cb) {
+
+
+function loadPackages() {
+    try {
+        return require(packagesFile);
+    } catch (e) {
+        return {
+            packages: {}
+        };
+    }
+}
+
+function loadOrupdatePackages(packages, cb) {
     var path = '/-/all/';
-    if (raw.timestamp) path += 'since?startkey=' + raw.timestamp;
+    if (packages.timestamp) path += 'since?startkey=' + packages.timestamp;
 
     request.get({
         url: 'http://registry.npmjs.org' + path,
         json: true
-    },
-    function(err, res, data) {
+    }, function(err, res, data) {
         if (!err) {
             Object.keys(data).forEach(function(key) {
-                raw.packages[key] = data[key];
+                packages.packages[key] = data[key];
             });
-            raw.timestamp = Date.now();
-            fs.writeFile(fileRaw, JSON.stringify(raw), function(err) {
-                cb(err, raw);
+            packages.timestamp = Date.now();
+            fs.writeFile(packagesFile, JSON.stringify(packages), function(err) {
+                console.log('Total packages: %d', Object.keys(packages.packages).length);
+
+                cb(err);
             });
         } else {
             cb(err);
@@ -85,10 +57,10 @@ function updatePackages(raw, cb) {
     });
 }
 
-function getRepositories(rawPackages) {
-    return Object.keys(rawPackages).map(function(k) {
-        var p = rawPackages[k],
-        urls = [];
+function setRepoUrl(packages) {
+    Object.keys(packages).map(function(k) {
+        var p = packages[k];
+        var urls = [];
 
         function parseRepo(repo) {
             if (repo) {
@@ -108,79 +80,73 @@ function getRepositories(rawPackages) {
         }
         if (p.url) urls.push(p.url);
 
-        return {
-            name: k,
-            url: urls
-        };
+        p.repoUrl = filterUrls(urls);
     });
 }
 
-function filterRepoUrls(repos) {
-    return repos.map(function(repo) {
-        var urls = repo.url.filter(function(url) {
-            return ('' + url).match(/github/);
-        }).map(function(url) {
-            return url.replace(/(^.*\.com.)|\.git$/g, '');
-        });
-
-        repo.url = urls.length > 0 ? urls[0] : false;
-        return repo;
+function filterUrls(urls) {
+    urls = urls.filter(function(url) {
+        return ('' + url).match(/github/);
+    }).map(function(url) {
+        return url.replace(/(^.*\.com.)|\.git$/g, '');
     });
+
+    return urls.length > 0 ? urls[0] : false;
 }
 
-function githubSync(repos, cb) {
+function loadAndSetRepos(packages, cb) {
     var prevLimit = '?';
     console.log('Legend: Packages left (github query limit) - package name - package url');
 
-    function sync(repos, i) {
-        var repo, sleep;
+    var names = Object.keys(packages);
 
+    function getRepo(i) {
         if (!i) i = 0;
-        if (i < repos.length - 1) {
-            repo = repos[i];
-            console.log('%d (%s) - %s - %s', repos.length - i, prevLimit, repo.name, repo.url);
-            if (repo.url) {
-                github(repo.url, function(err, data, limit) {
-                    prevLimit = limit;
-                    if (!err) {
-                        repo.forks = data.forks;
-                        repo.watchers = data.watchers;
-                    } else {
-                        delete repo.url;
-                    }
 
-                    if (limit > 0) {
-                        sync(repos, i + 1);
-                    } else {
-                        sleep = (70 * 60) - (Date.now() - start.getTime()) / 1000;
-                        sleep = Math.floor(sleep);
-
-                        console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
-                        setTimeout(function() {
-                            sync(repos, i + 1);
-                        },
-                        sleep * 1000);
-                    }
-                });
-            } else {
-                sync(repos, i + 1);
-            }
-        } else {
-            cb(repos);
+        if (i >= names.length) {
+            cb();
+            return;
         }
+
+        var name = names[i];
+        var p = packages[name];
+
+        if (!p.repoUrl) {
+            getRepo(i + 1);
+            return;
+        }
+
+        console.log('%d (%s) - %s - %s', names.length - i, prevLimit, name, p.repoUrl);
+        github(p.repoUrl, function(err, data, limit) {
+            prevLimit = limit;
+            if (!err) {
+                p.repo = data;
+            }
+
+            if (limit > 0) {
+                getRepo(i + 1);
+            } else {
+                sleep = (70 * 60) - (Date.now() - start.getTime()) / 1000;
+                sleep = Math.floor(sleep);
+
+                console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
+                setTimeout(function() {
+                    getRepo(i + 1);
+                }, sleep * 1000);
+            }
+        });
     }
-    sync(repos);
+    getRepo();
 }
 
 function github(url, cb) {
     request.get({
         url: 'https://api.github.com/repos/' + url,
         json: true
-    },
-    function(err, res, data) {
+    }, function(err, res, data) {
         if (!err) {
             var limit = parseInt(res.headers['x-ratelimit-remaining'], 10);
-            err = ! data || ! data.html_url;
+            err = !data || !data.html_url;
             cb(err, data, limit);
         } else {
             cb(err, null, 1);
@@ -188,3 +154,39 @@ function github(url, cb) {
     });
 }
 
+function writePackages(packages) {
+    var output = {
+        aaData: []
+    };
+
+    Object.keys(packages.packages).forEach(function(k) {
+        var raw = packages.packages[k];
+
+        var name = k;
+        var description = raw.description;
+        var author = '';
+        var modified = new Date(0);
+        var forks = 0;
+        var stargazers = 0;
+        var stars = 0;
+        var npm = '';
+
+        if (raw.repo) {
+            var r = raw.repo;
+
+            forks = r.forks;
+            stargazers = r.watchers;
+
+            if (r.author) author = '<a href="' + r.author.url + '">' + r.author.name + '</a>';
+            if (r.time) modified = new Date(r.time.modified);
+        }
+
+        modified = [modified.getFullYear(), modified.getMonth() + 1, modified.getDate()].join('-');
+
+        output.aaData.push([name, description, author, modified, forks, stargazers, stars, npm]);
+    });
+
+    fs.writeFile(outputFile, JSON.stringify(output), function() {
+        console.log('Done');
+    });
+}
