@@ -7,6 +7,11 @@ var outputFile = './packages.json';
 
 var start = new Date();
 
+var token = '';
+try {
+    token = require('./token.json');
+} catch (e){}
+
 
 console.log('Nipster! - %s-%s-%s', start.getFullYear(), start.getMonth() + 1, start.getDate());
 
@@ -142,7 +147,10 @@ function loadAndSetRepos(packages, cb) {
 function github(url, cb) {
     request.get({
         url: 'https://api.github.com/repos/' + url,
-        json: true
+        json: true,
+        headers: {
+            Authorization: token
+        }
     }, function(err, res, data) {
         if (!err) {
             var limit = parseInt(res.headers['x-ratelimit-remaining'], 10);
