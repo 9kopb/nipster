@@ -215,7 +215,7 @@ function writePackages(packages) {
         var modified = new Date(0);
         var forks = 0;
         var stargazers = 0;
-        var stars = 0;
+        var stars = raw.users ? Object.keys(raw.users).length : 0;
         var npm = '';
 
         if (raw.repo) {
