@@ -192,6 +192,7 @@ function writePackages(packages) {
 
             forks = r.forks;
             stargazers = r.watchers;
+            name = r['full_name'] + ' ' + name;
         }
 
         if (raw.author) {
