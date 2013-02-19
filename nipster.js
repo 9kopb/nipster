@@ -144,37 +144,6 @@ function filterUrls(urls) {
 
     return urls.length > 0 ? urls[0] : false;
 }
-/*
-
-function loadAndSetRepo(package, cb) {
-    var prevLimit = '?';
-    //console.log('Legend: Packages left (github query limit) - package name - package url');
-    var p = packages[name];
-
-    console.log('%d (%s) - %s - %s', names.length - i, prevLimit, name, p.repoUrl);
-    github(p.repoUrl, function(err, data, limit) {
-        console.log(limit, limit > 0)
-        prevLimit = limit;
-        if (!err) {
-            p.repo = data;
-        }
-
-        if (limit > 0) {
-            getRepo(i + 1);
-        } else {
-            //sleep = (70 * 60) - (Date.now() - start.getTime()) / 1000;
-            sleep = Math.floor(3600 * 1000);
-
-            console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
-            setTimeout(function() {
-                getRepo(i + 1);
-            }, sleep * 1000);
-        }
-    });
-}
-getRepo();
-}
-*/
 
 function loadToken() {
     try {
