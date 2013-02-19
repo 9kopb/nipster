@@ -2,57 +2,103 @@ var fs = require('fs');
 var path = require('path');
 var request = require('request');
 
-var packagesFile = './packages-raw.json';
+var dataFile = './data.json';
 var outputFile = './packages.json';
 
 var start = new Date();
 
-var token = '';
-try {
-    token = require('./token.json');
-} catch (e){}
+(function() {
+    console.log('Nipster! - %s-%s-%s', start.getFullYear(), start.getMonth() + 1, start.getDate());
 
+    var data = loadData();
 
-console.log('Nipster! - %s-%s-%s', start.getFullYear(), start.getMonth() + 1, start.getDate());
+    loadOrupdatePackages(data, function() {
+        setRepoUrl(data.packages);
 
-var packages = loadPackages();
-loadOrupdatePackages(packages, function() {
-    setRepoUrl(packages.packages);
+        var token = loadToken();
+        var sleep = 0;
+        var running = false;
+        var sec;
+        var t = setInterval(function() {
+            if (running) return;
+            if (Date.now() < sleep) {
+                var csec = Math.floor((sleep - Date.now()) / 1000);
+                if (csec !== sec) {
+                    console.log(csec);
+                    sec = csec;
+                }
+                return;
+            }
+            sleep = 0;
+            running = true;
+            var nexts = getNextPackageWithRepo(data.packages);
+            if (nexts.length === 0) {
+                writePackages(data);
+                clearInterval(t);
+                return;
+            }
+            var count = 0;
+            nexts.forEach(function(next) {
 
-    loadAndSetRepos(packages.packages, function() {
-        fs.writeFileSync(packagesFile, JSON.stringify(packages));
-
-        writePackages(packages);
+                console.log(next.name, next.repoUrl);
+                github(token, next.repoUrl, function(err, repo, limit) {
+                    if (sleep > 0) return;
+                    if (limit === 0 || isNaN(limit)) {
+                        sleep = Date.now() + 1000 * 60 * 60;
+                        running = false;
+                        return;
+                    }
+                    console.log(limit);
+                    next.repo = repo;
+                    next.lastRun = Date.now();
+                    count++;
+                    if (count >= nexts.length) {
+                        console.log('SAVE!');
+                        fs.writeFile(dataFile, JSON.stringify(data), function() {
+                            running = false;
+                        });
+                    }
+                });
+            });
+        }, 1);
+        return;
     });
-});
+})();
 
-
-
-function loadPackages() {
-    try {
-        return require(packagesFile);
-    } catch (e) {
-        return {
-            packages: {}
-        };
-    }
+function getNextPackageWithRepo(packages) {
+    return Object.keys(packages).filter(function(key) {
+        var p = packages[key];
+        var runByDate = !p.lastRun || p.lastRun < Date.now() - (1000 * 60 * 60 * 24 * 2);
+        return p.repoUrl && runByDate;
+    }).map(function(key) {
+        return packages[key];
+    }).slice(0, 100);
 }
 
-function loadOrupdatePackages(packages, cb) {
+function loadData() {
+    var data = {};
+    try {
+        data = require(dataFile);
+    } catch (e) {}
+    if (!data.packages) data.packages = {};
+    return data;
+}
+
+function loadOrupdatePackages(data, cb) {
     var path = '/-/all/';
-    if (packages.timestamp) path += 'since?startkey=' + packages.timestamp;
+    if (data.timestamp) path += 'since?startkey=' + data.timestamp;
 
     request.get({
         url: 'http://registry.npmjs.org' + path,
         json: true
-    }, function(err, res, data) {
+    }, function(err, res, d) {
         if (!err) {
-            Object.keys(data).forEach(function(key) {
-                packages.packages[key] = data[key];
+            Object.keys(d).forEach(function(key) {
+                data.packages[key] = d[key];
             });
-            packages.timestamp = Date.now();
-            fs.writeFile(packagesFile, JSON.stringify(packages), function(err) {
-                console.log('Total packages: %d', Object.keys(packages.packages).length);
+            data.timestamp = Date.now();
+            fs.writeFile(dataFile, JSON.stringify(data), function(err) {
+                console.log('Total packages: %d', Object.keys(data.packages).length);
 
                 cb(err);
             });
@@ -98,53 +144,46 @@ function filterUrls(urls) {
 
     return urls.length > 0 ? urls[0] : false;
 }
+/*
 
-function loadAndSetRepos(packages, cb) {
+function loadAndSetRepo(package, cb) {
     var prevLimit = '?';
-    console.log('Legend: Packages left (github query limit) - package name - package url');
+    //console.log('Legend: Packages left (github query limit) - package name - package url');
+    var p = packages[name];
 
-    var names = Object.keys(packages);
-
-    function getRepo(i) {
-        if (!i) i = 0;
-
-        if (i >= names.length) {
-            cb();
-            return;
+    console.log('%d (%s) - %s - %s', names.length - i, prevLimit, name, p.repoUrl);
+    github(p.repoUrl, function(err, data, limit) {
+        console.log(limit, limit > 0)
+        prevLimit = limit;
+        if (!err) {
+            p.repo = data;
         }
 
-        var name = names[i];
-        var p = packages[name];
-
-        if (!p.repoUrl) {
+        if (limit > 0) {
             getRepo(i + 1);
-            return;
-        }
+        } else {
+            //sleep = (70 * 60) - (Date.now() - start.getTime()) / 1000;
+            sleep = Math.floor(3600 * 1000);
 
-        console.log('%d (%s) - %s - %s', names.length - i, prevLimit, name, p.repoUrl);
-        github(p.repoUrl, function(err, data, limit) {
-            prevLimit = limit;
-            if (!err) {
-                p.repo = data;
-            }
-
-            if (limit > 0) {
+            console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
+            setTimeout(function() {
                 getRepo(i + 1);
-            } else {
-                sleep = (70 * 60) - (Date.now() - start.getTime()) / 1000;
-                sleep = Math.floor(sleep);
+            }, sleep * 1000);
+        }
+    });
+}
+getRepo();
+}
+*/
 
-                console.log('Limit reached, sleeping for %d seconds (%s)', sleep, new Date());
-                setTimeout(function() {
-                    getRepo(i + 1);
-                }, sleep * 1000);
-            }
-        });
-    }
-    getRepo();
+function loadToken() {
+    try {
+        return require('./token.json');
+    } catch (e) {}
+    return '';
 }
 
-function github(url, cb) {
+function github(token, url, cb) {
     request.get({
         url: 'https://api.github.com/repos/' + url,
         json: true,
@@ -184,10 +223,16 @@ function writePackages(packages) {
 
             forks = r.forks;
             stargazers = r.watchers;
-
-            if (r.author) author = '<a href="' + r.author.url + '">' + r.author.name + '</a>';
-            if (r.time) modified = new Date(r.time.modified);
         }
+
+        if (raw.author) {
+            var aName = raw.author.name;
+            var aUrl = raw.author.url;
+            if (aUrl) author = '<a href="' + aUrl + '">' + aName + '</a>';
+            else author = aName;
+        }
+
+        if (raw.time) modified = new Date(raw.time.modified);
 
         modified = [modified.getFullYear(), modified.getMonth() + 1, modified.getDate()].join('-');
 
