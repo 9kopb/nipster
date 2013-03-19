@@ -186,6 +186,7 @@ function writePackages(packages) {
         var stargazers = 0;
         var stars = raw.users ? Object.keys(raw.users).length : 0;
         var npm = '';
+        var keywords = raw.keywords ? [].concat(raw.keywords).join(' ') : '';
 
         if (raw.repo) {
             var r = raw.repo;
@@ -206,7 +207,7 @@ function writePackages(packages) {
 
         modified = [modified.getFullYear(), modified.getMonth() + 1, modified.getDate()].join('-');
 
-        output.aaData.push([name, description, author, modified, forks, stargazers, stars, npm]);
+        output.aaData.push([name, description, author, modified, forks, stargazers, stars, npm, keywords]);
     });
 
     fs.writeFile(outputFile, JSON.stringify(output), function() {
