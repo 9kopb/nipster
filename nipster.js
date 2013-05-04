@@ -153,7 +153,7 @@ function loadToken() {
 }
 
 function github(token, url, cb) {
-  request.post({
+  request.get({
     url: 'https://api.github.com/repos/' + url,
     json: true,
     headers: {
