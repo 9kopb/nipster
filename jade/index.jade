@@ -1,8 +1,7 @@
 !!! 5
 html
   head
-    title Nipster! npm search tool for Node.js
-    meta(name='description', content='npm search tool for node (Node.js)')
+    title Nipster! Github-rated search tool for npm, Bower
     meta(name='author', content='Eirik Brandtzæg, eirikb@eirikb.no')
     meta(charset='utf-8')
 
@@ -21,15 +20,13 @@ html
 
     body
       a(href='http://github.com/eirikb/nipster')
-        img.fork(src='http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png', alt='Fork me on GitHub')
+        img.fork(src='img/honesty.png', alt='Stargaze me on GitHub')
       .wrapper
         .content
-          .npm
-            img(src='img/npm.png')
-            span.plus +
-            img(src='img/github.png')
-            span.plus =
-            span.big Perfect rating!
+          ul.header
+            li
+              a(href='#npm')
+                img(src='img/npm.png')
           table.display
             thead
               th.small name
