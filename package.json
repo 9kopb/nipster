@@ -1,0 +1,24 @@
+{
+  "name": "nipster",
+  "author": "Eirik Brandtzæg <eirikb@eirikb.no>",
+  "main": "nipster.js",
+  "version": "0.0.1",
+  "description": "Building JSON file for http://eirikb.github.com/nipster",
+  "homepage": "http://eirikb.github.com/nipster",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eirikb/nipster"
+  },
+  "dependencies": {
+    "request": "2.9.100"
+  },
+  "devDependencies": {
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-uglify": "~0.2.4",
+    "grunt-contrib-jade": "~0.8.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-less": "~0.7.0",
+    "grunt-contrib-connect": "~0.5.0"
+  }
+}
