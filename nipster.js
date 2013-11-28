@@ -41,7 +41,7 @@ var start = new Date();
       nexts.forEach(function(next) {
 
         console.log(next.name, next.repoUrl);
-        github(token, next.repoUrl, function(err, repo, limit) {
+        github(token, next, function(err, repo, limit) {
           if (sleep > 0) return;
           if (limit === 0 || isNaN(limit)) {
             sleep = Date.now() + 1000 * 60 * 60;
@@ -49,7 +49,12 @@ var start = new Date();
             return;
           }
           console.log('limit', limit);
-          next.repo = repo;
+          next.repo = {
+            forks: repo.forks,
+            stargazers: repo.watchers,
+            full_name: repo.full_name,
+            etag: repo.etag
+          };
           next.lastRun = Date.now();
           count++;
           if (count >= nexts.length) {
@@ -152,18 +157,26 @@ function loadToken() {
   return '';
 }
 
-function github(token, url, cb) {
+function github(token, next, cb) {
+  var etag = next.repo && next.repo.etag;
+
   request.get({
-    url: 'https://api.github.com/repos/' + url,
+    url: 'https://api.github.com/repos/' + next.repoUrl,
     json: true,
     headers: {
       'User-Agent': 'node.js',
+      'If-None-Match': etag,
       Authorization: 'token ' + token
     }
   }, function(err, res, data) {
     if (!err) {
       var limit = parseInt(res.headers['x-ratelimit-remaining'], 10);
       err = !data || !data.html_url;
+      if (next.repo && res.statusCode === 304) {
+        cb(null, next.repo, limit);
+        return;
+      }
+      data.etag = res.headers.etag;
       cb(err, data, limit);
     } else {
       cb(err, null, 1);
@@ -193,8 +206,8 @@ function writePackages(packages) {
       var r = raw.repo;
 
       forks = r.forks;
-      stargazers = r.watchers;
-      name = r['full_name'] + ' ' + name;
+      stargazers = r.stargazers;
+      name = r.full_name + ' ' + name;
     }
 
     if (raw.author) {
